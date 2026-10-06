@@ -41,7 +41,7 @@ public final class Share {
             throw new IllegalArgumentException("校验不通过：分享码可能被截断或复制不完整");
         }
         String payload = new String(raw, java.nio.charset.Charset.forName("UTF-8"));
-        int level = Props.STD;
+        int level = Props.DEEP;
         StringBuilder body = new StringBuilder();
         for (String line : payload.split("\n")) {
             if (line.startsWith("level=")) {
@@ -51,7 +51,9 @@ public final class Share {
             }
         }
         Target t = Target.parse(body.toString());
-        return new Object[]{t, level};
+        // DTB1 文本格式不变（level= 字段照旧读写）；值在使用处统一归一 —— 老分享码里的
+        // 0/1 也按深度档执行，界面显示的档位因此与实际行为一致。
+        return new Object[]{t, Props.normalizedLevel(level)};
     }
 
     private static String crc(byte[] raw) {

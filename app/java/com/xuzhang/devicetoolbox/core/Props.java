@@ -30,11 +30,13 @@ public final class Props {
 
     public static final String[] LEVEL_NAME = {"轻量", "标准", "深度"};
 
-    public static final String[] LEVEL_DESC = {
-            "只改「关于手机」显示的型号 / 品牌 / 设备名，共 %d 条，最不容易出问题",
-            "把 6 个分区的机型键全部对齐，并改写 7 处指纹，共 %d 条，能过绝大多数机型校验",
-            "改全 6 个分区的机型键与各分区指纹，并补齐构建信息、Android 版本与安全补丁，共 %d 条 —— 覆盖最全，露馅点最少",
-    };
+    /**
+     * 档位归一：**档位已固定为「深度」档**（{@link Store#level()} 直接返回 {@link #DEEP}），
+     * 但老方案里存的、老分享码（DTB1）里带的还可能是 0/1 —— 读取处一律经过这里，
+     * 保证「显示的档位」与「实际执行的档位」一致。字段与分享码文本格式都不变，
+     * 参数保留是为了让调用点写成「把这个值归一」，取值恒为 {@link #DEEP}。
+     */
+    public static int normalizedLevel(int level) { return DEEP; }
 
     /** 参与镜像的分区（属性命名空间）。 */
     private static final String[] PART = {"system", "vendor", "odm", "product", "system_ext", "bootimage"};

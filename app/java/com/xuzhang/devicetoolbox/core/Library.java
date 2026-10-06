@@ -268,11 +268,6 @@ public final class Library {
         return list;
     }
 
-    /** 用外部来源的列表覆盖内置库。 */
-    public static synchronized void override(List<Target> list) {
-        if (list != null && !list.isEmpty()) cache = list;
-    }
-
     /** 按机型码反查内置条目（老版本存下的目标没有通俗名时用得上）。 */
     public static Target byModel(String model) {
         if (model == null || model.isEmpty()) return null;
@@ -324,21 +319,6 @@ public final class Library {
     }
 
     // ------------------------------------------------------------ 生成器
-
-    public static final String[] GEN_SOC = {
-            "Tensor G4", "Tensor G3", "Tensor G2", "骁龙 8 Gen 3", "骁龙 8 Gen 2",
-            "骁龙 8+ Gen 1", "骁龙 8 Gen 1", "骁龙 888", "骁龙 7+ Gen 2", "骁龙 7 Gen 3",
-            "天玑 9300", "天玑 9200", "天玑 9000", "天玑 8300 Ultra", "天玑 8200",
-            "Exynos 2400", "Exynos 2200", "麒麟 9000S",
-    };
-
-    public static final String[] GEN_RELEASE = {"16", "15", "14", "13", "12", "11"};
-
-    public static final String[] GEN_BRAND = {
-            "google", "samsung", "xiaomi", "redmi", "poco", "oneplus", "oppo", "realme",
-            "vivo", "iqoo", "honor", "huawei", "sony", "asus", "nothing", "motorola",
-            "nubia", "meizu", "zte",
-    };
 
     public static Target generate(String brand, String model, String soc, String release) {
         Target t = new Target();

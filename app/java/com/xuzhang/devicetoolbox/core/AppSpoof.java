@@ -41,10 +41,6 @@ public final class AppSpoof {
         return out;
     }
 
-    public static boolean isEnabled(Context c, String pkg) {
-        return enabled(c).contains(pkg);
-    }
-
     public static void setEnabled(Context c, String pkg, boolean on) {
         List<String> list = enabled(c);
         if (on) {

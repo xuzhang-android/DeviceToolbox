@@ -126,44 +126,6 @@ public abstract class Page {
         Ui.pressable(btn);
     }
 
-    // ------------------------------------------------------------ 信息行
-
-    protected LinearLayout kv(LinearLayout parent, String key, String value) {
-        return kv(parent, key, value, p.onSurface, false);
-    }
-
-    protected LinearLayout kv(LinearLayout parent, String key, String value, int color, boolean bold) {
-        LinearLayout row = Ui.row(act);
-        Ui.pad(row, 0, Ui.S2, 0, 0);
-
-        TextView k = Ui.body(act, key, p.onSurfaceVariant);
-        row.addView(k, Ui.lpw(1f));
-
-        TextView v = Ui.text(act, value, 14, color, bold ? Ui.W_BOLD : Ui.W_REGULAR);
-        v.setGravity(android.view.Gravity.END);
-        row.addView(v);
-        parent.addView(row);
-        return row;
-    }
-
-    /** 状态行：左侧状态点，右侧结论。 */
-    protected void status(LinearLayout parent, String label, boolean ok, String value) {
-        LinearLayout row = Ui.row(act);
-        Ui.pad(row, 0, Ui.S2, 0, 0);
-
-        android.view.View dot = new android.view.View(act);
-        dot.setBackground(Ui.pill(ok ? p.success : p.error));
-        row.addView(dot, Ui.lp(Ui.dp(7), Ui.dp(7)));
-        Ui.margins(dot, 0, 0, Ui.S3, 0);
-
-        row.addView(Ui.body(act, label, p.onSurface), Ui.lpw(1f));
-
-        TextView v = Ui.text(act, value, 13, ok ? p.success : p.error, Ui.W_BOLD);
-        v.setGravity(android.view.Gravity.END);
-        row.addView(v);
-        parent.addView(row);
-    }
-
     // ------------------------------------------------------------ 输入
 
     protected EditText field(LinearLayout parent, String labelText, String value, String hintText) {
@@ -184,34 +146,6 @@ public abstract class Page {
         parent.addView(e, Ui.lp(LinearLayout.LayoutParams.MATCH_PARENT, Ui.dp(Ui.H_CONTROL)));
         Ui.margins(e, 0, Ui.S2, 0, 0);
         return e;
-    }
-
-    /** 分段选择：Material 芯片，选中用主色容器填充。 */
-    protected LinearLayout segments(LinearLayout parent, String[] labels, int selected,
-                                    android.view.View.OnClickListener onClick) {
-        HorizontalScrollView sc = new HorizontalScrollView(act);
-        sc.setHorizontalScrollBarEnabled(false);
-        sc.setClipToPadding(false);
-        LinearLayout row = Ui.row(act);
-        Ui.pad(row, 0, Ui.S2, 0, 0);
-        sc.addView(row);
-        for (int i = 0; i < labels.length; i++) {
-            TextView t = Ui.text(act, labels[i], 13.5f,
-                    i == selected ? p.onPrimaryContainer : p.onSurfaceVariant,
-                    i == selected ? Ui.W_BOLD : Ui.W_REGULAR);
-            t.setGravity(android.view.Gravity.CENTER);
-            t.setBackground(Ui.pill(i == selected ? p.primaryContainer : p.surfaceContainerHigh));
-            t.setPadding(Ui.dp(Ui.S5), 0, Ui.dp(Ui.S5), 0);
-            t.setClickable(true);
-            t.setTag(Integer.valueOf(i));
-            t.setOnClickListener(onClick);
-            LinearLayout.LayoutParams lp = Ui.lp(LinearLayout.LayoutParams.WRAP_CONTENT, Ui.dp(42));
-            lp.rightMargin = Ui.dp(Ui.S2);
-            row.addView(t, lp);
-        }
-        parent.addView(sc, Ui.wrap());
-        Ui.margins(sc, 0, 0, 0, 0);
-        return row;
     }
 
     // ------------------------------------------------------------ 弹窗

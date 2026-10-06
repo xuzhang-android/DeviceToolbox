@@ -79,9 +79,4 @@ public final class Palette {
             0xFFFFFFFF);
 
     public static Palette of(boolean dark) { return dark ? DARK : LIGHT; }
-
-    /** 主色按透明度淡出，用于选中态底色。 */
-    public int primaryAlpha(int alpha) {
-        return (primary & 0x00FFFFFF) | ((alpha & 0xFF) << 24);
-    }
 }

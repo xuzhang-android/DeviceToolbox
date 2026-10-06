@@ -38,19 +38,6 @@ public final class Device {
         return v == null ? "" : v;
     }
 
-    /** 直接问系统属性（不依赖缓存），用于校验。 */
-    public static String propLive(String key) {
-        Sh.Result r = Sh.root("getprop " + Sh.q(key));
-        String v = r.out.trim();
-        if (v.isEmpty()) {
-            try {
-                Class<?> c = Class.forName("android.os.SystemProperties");
-                v = String.valueOf(c.getMethod("get", String.class, String.class).invoke(null, key, ""));
-            } catch (Throwable ignored) { }
-        }
-        return v == null ? "" : v;
-    }
-
     // ---------------------------------------------------------------- Build
 
     /** 读 android.os.Build 的静态字段（Java 层看到的机型，用于三路对比）。 */
@@ -108,14 +95,6 @@ public final class Device {
 
     // ------------------------------------------------------- 当前机型摘要
 
-    public static String currentModel() {
-        String m = prop("ro.product.model");
-        if (m.isEmpty()) m = build("MODEL");
-        String b = prop("ro.product.brand");
-        if (b.isEmpty()) b = build("BRAND");
-        return (b.isEmpty() ? "" : capitalize(b) + " ") + m;
-    }
-
     public static String currentRelease() {
         String v = prop("ro.build.version.release");
         return v.isEmpty() ? build("RELEASE") : v;
@@ -129,11 +108,6 @@ public final class Device {
     public static String currentPatch() {
         String v = prop("ro.build.version.security_patch");
         return v.isEmpty() ? build("SECURITY_PATCH") : v;
-    }
-
-    public static String currentFingerprint() {
-        String v = prop("ro.build.fingerprint");
-        return v.isEmpty() ? build("FINGERPRINT") : v;
     }
 
     public static String capitalize(String s) {

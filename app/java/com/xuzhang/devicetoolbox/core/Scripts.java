@@ -180,52 +180,6 @@ public final class Scripts {
         return sb.toString();
     }
 
-    // ------------------------------------------------------------ 隐藏 root 痕迹
-
-    /**
-     * 暴露「这台机器被解锁过 / 可调试」的属性。
-     * 检测 SDK 主要就看这几项，所以把它们写回「原厂锁定、校验通过」的状态。
-     */
-    public static final String[][] HIDE_ROOT_PROPS = {
-            {"ro.debuggable", "0"},
-            {"ro.secure", "1"},
-            {"ro.build.type", "user"},
-            {"ro.build.tags", "release-keys"},
-            {"ro.build.selinux", "1"},
-            {"ro.boot.verifiedbootstate", "green"},
-            {"ro.boot.flash.locked", "1"},
-            {"ro.boot.veritymode", "enforcing"},
-            {"ro.boot.vbmeta.device_state", "locked"},
-            {"ro.boot.warranty_bit", "0"},
-            {"ro.warranty_bit", "0"},
-            {"ro.secureboot.lockstate", "locked"},
-            {"ro.boot.mode", "normal"},
-            {"ro.oem_unlock_supported", "0"},
-            {"sys.oem_unlock_allowed", "0"},
-            {"ro.crypto.state", "encrypted"},
-            {"vendor.boot.verifiedbootstate", "green"},
-            {"vendor.boot.vbmeta.device_state", "locked"},
-            {"ro.is_ever_orange", "0"},
-            {"ro.boot.realmebootstate", "green"},
-    };
-
-    public static java.util.List<String> hideRootKeys() {
-        java.util.List<String> keys = new java.util.ArrayList<>();
-        for (String[] kv : HIDE_ROOT_PROPS) keys.add(kv[0]);
-        return keys;
-    }
-
-    /** 生成隐藏 root 的脚本。 */
-    public static String hideRoot() {
-        StringBuilder sb = new StringBuilder(header());
-        sb.append("echo 'HIDE_ROOT'\n");
-        for (String[] kv : HIDE_ROOT_PROPS) {
-            sb.append("setp ").append(Sh.q(kv[0])).append(' ').append(Sh.q(kv[1])).append('\n');
-        }
-        sb.append("echo \"DONE ").append(HIDE_ROOT_PROPS.length).append("\"\n");
-        return sb.toString();
-    }
-
     /**
      * 快照的「期望值」清单：每行 key<TAB>值。
      * 还原之后用它读回校验 —— 还原失败必须能发现，不能默默失败。
@@ -250,7 +204,7 @@ public final class Scripts {
                 + "version=1.0\n"
                 + "versionCode=1\n"
                 + "author=xuzhang\n"
-                + "description=开机自动应用机型伪装（" + Props.LEVEL_NAME[level] + "档 · "
+                + "description=开机自动应用机型伪装（" + Props.LEVEL_NAME[Props.normalizedLevel(level)] + "档 · "
                 + t.title() + "）\n";
     }
 
@@ -273,7 +227,7 @@ public final class Scripts {
     /** 独立的 apply.sh（导出到 /sdcard 用，不依赖本 App）。 */
     public static String standaloneApply(Target t, int level) {
         return "#!/system/bin/sh\n"
-                + "# 改机型工具箱 —— 独立应用脚本（" + Props.LEVEL_NAME[level] + "档 / " + t.title() + "）\n"
+                + "# 改机型工具箱 —— 独立应用脚本（" + Props.LEVEL_NAME[Props.normalizedLevel(level)] + "档 / " + t.title() + "）\n"
                 + "# 用法: su -c 'sh apply.sh'\n"
                 + header() + apply(t, level);
     }

@@ -99,7 +99,7 @@ public final class SchemePage extends Page {
 
             LinearLayout head = Ui.row(act);
             head.addView(Ui.text(act, s.name, 16, p.onSurface, Ui.W_BOLD), Ui.lpw(1f));
-            TextView lvl = Ui.text(act, Props.LEVEL_NAME[Math.max(0, Math.min(2, s.level))],
+            TextView lvl = Ui.text(act, Props.LEVEL_NAME[Props.normalizedLevel(s.level)],
                     12, p.onPrimaryContainer, Ui.W_BOLD);
             lvl.setBackground(Ui.pill(p.primaryContainer));
             lvl.setPadding(Ui.dp(Ui.S3), Ui.dp(4), Ui.dp(Ui.S3), Ui.dp(4));
@@ -185,7 +185,7 @@ public final class SchemePage extends Page {
             t.normalize();
             confirm("导入分享码",
                     "机型：" + Library.displayName(t) + "\nAndroid " + t.release + " · 补丁 " + t.patch
-                            + "\n档位：" + Props.LEVEL_NAME[Math.max(0, Math.min(2, level))]
+                            + "\n档位：" + Props.LEVEL_NAME[Props.normalizedLevel(level)]
                             + "\n\n导入后只作为当前目标，不会自动写入系统。",
                     "导入", () -> {
                         store.setTarget(t);

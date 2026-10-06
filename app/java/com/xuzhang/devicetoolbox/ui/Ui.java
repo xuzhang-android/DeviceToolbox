@@ -83,8 +83,6 @@ public final class Ui {
     /** 统一控件高度：按钮 / 输入框 / 次级操作全部一致。 */
     public static final float H_CONTROL = 52;
 
-    public static final float H_NAV = 76;
-
     public static final int W_REGULAR = Typeface.NORMAL;
     public static final int W_MEDIUM = 0x1000;   // 自定义：中等重量
     public static final int W_BOLD = Typeface.BOLD;
@@ -219,11 +217,6 @@ public final class Ui {
         if (p instanceof ViewGroup.MarginLayoutParams) {
             ((ViewGroup.MarginLayoutParams) p).setMargins(dp(l), dp(t), dp(r), dp(b));
         }
-    }
-
-    public static int statusBarHeight(Context c) {
-        int id = c.getResources().getIdentifier("status_bar_height", "dimen", "android");
-        return id > 0 ? c.getResources().getDimensionPixelSize(id) : dp(24);
     }
 
     public static int navBarHeight(Context c) {
@@ -393,13 +386,6 @@ public final class Ui {
             TextView t = text(c, s, 18, p.onSurface, W_BOLD);
             t.setLetterSpacing(-0.01f);
             column.addView(t);
-            return this;
-        }
-
-        /** 标题下的一行灰色小字说明。 */
-        public Sheet note(CharSequence s) {
-            if (s == null || s.length() == 0) return this;
-            add(column, text(c, s, 12, p.onSurfaceVariant, W_REGULAR), 0, S2, 0, 0);
             return this;
         }
 

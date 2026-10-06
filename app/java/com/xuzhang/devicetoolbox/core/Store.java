@@ -13,7 +13,6 @@ public final class Store {
 
     private static final String NAME = "toolbox";
     private static final String K_TARGET = "target";
-    private static final String K_LEVEL = "level";
     private static final String K_DARK = "dark";
     private static final String K_SCHEMES = "schemes";
     private static final String K_FAV = "favorites";
@@ -69,7 +68,7 @@ public final class Store {
     public static final class Scheme {
         public String name = "";
         public String target = "";
-        public int level = Props.STD;
+        public int level = Props.DEEP;      // 档位固定为深度档（见 level()），新建方案即深度
         public long time = 0;
 
         public Target asTarget() { return Target.parse(target); }
@@ -83,7 +82,8 @@ public final class Store {
             Scheme sc = new Scheme();
             if (f.length < 4) return sc;
             sc.name = Target.unesc(f[0]);
-            try { sc.level = Integer.parseInt(f[1]); } catch (Throwable ignored) { }
+            // 老版本存下的方案里可能是 0/1：读出来就归一，列表显示的档位才与实际执行一致。
+            try { sc.level = Props.normalizedLevel(Integer.parseInt(f[1])); } catch (Throwable ignored) { }
             try { sc.time = Long.parseLong(f[2]); } catch (Throwable ignored) { }
             sc.target = Target.unesc(f[3]);
             return sc;

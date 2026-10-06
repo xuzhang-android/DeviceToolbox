@@ -41,7 +41,8 @@ public final class Engine {
         public String title = "";
         public int level = 0;
 
-        public String label() { return title + " · " + Props.LEVEL_NAME[Math.max(0, Math.min(2, level))]; }
+        // level 来自快照目录里的 meta.txt（历史数据，老快照可能是 0/1）：显示统一走归一。
+        public String label() { return title + " · " + Props.LEVEL_NAME[Props.normalizedLevel(level)]; }
     }
 
     /** 目录里现有的快照，新的在前。 */
@@ -400,7 +401,7 @@ public final class Engine {
             return Op.done("已写入 " + n + " 条，但读回校验不一致：" + verify.message, n, r.out);
         }
         Device.invalidate();
-        return Op.done("已伪装为 " + t.title() + "（" + Props.LEVEL_NAME[level] + "档 · " + n + " 条）"
+        return Op.done("已伪装为 " + t.title() + "（" + Props.LEVEL_NAME[Props.normalizedLevel(level)] + "档 · " + n + " 条）"
                 + noRealFpNote(t), n, r.out);
     }
 
@@ -608,51 +609,6 @@ public final class Engine {
         return Op.fail("恢复出厂失败：" + r.text().trim());
     }
 
-    // ------------------------------------------------------------ 隐藏 root
-
-    /** 隐藏 root 痕迹：先快照（这样能原样还原），再写锁定状态属性。 */
-    public static Op hideRoot(Context c, Target t, int level) {
-        if (!Device.hasResetprop()) {
-            return Op.fail("没找到 resetprop，无法修改系统属性。");
-        }
-        Op snap = snapshotKeys(c, Scripts.hideRootKeys(), "隐藏 root 前");
-        if (!snap.ok) return Op.fail("已中止：自动快照没成功（" + snap.message + "）。");
-
-        Sh.Result r = Runner.root(c, "hide-root.sh", Scripts.hideRoot(), 40000);
-        if (!r.ok()) return Op.fail("执行失败：" + r.text().trim());
-        Device.invalidate();
-        return Op.done("已把 " + Scripts.HIDE_ROOT_PROPS.length + " 项暴露点写回锁定状态", 
-                Scripts.HIDE_ROOT_PROPS.length, r.out);
-    }
-
-    /** 为指定的一批键做快照（与按档位快照同一套机制）。 */
-    public static Op snapshotKeys(Context c, java.util.List<String> keys, String title) {
-        Map<String, String> current = Device.props();
-        String stamp = String.valueOf(System.currentTimeMillis());
-        String dir = Scripts.SNAP_DIR + "/" + stamp;
-
-        String restore = Scripts.restoreText(current, keys);
-        String local = Runner.writeOnly(c, "restore.sh", restore);
-
-        String meta = "time=" + stamp + "\ntitle=" + title + "\nlevel=0\ncount=" + keys.size() + "\n";
-        String metaLocal = Runner.writeOnly(c, "meta.txt", meta);
-        String valuesLocal = Runner.writeOnly(c, "values.tsv", Scripts.valuesText(current, keys));
-
-        String script = "mkdir -p " + Sh.q(dir) + "\n"
-                + "cp " + Sh.q(local) + " " + Sh.q(dir + "/restore.sh") + "\n"
-                + "chmod 755 " + Sh.q(dir + "/restore.sh") + "\n"
-                + "cp " + Sh.q(metaLocal) + " " + Sh.q(dir + "/meta.txt") + "\n"
-                + "cp " + Sh.q(valuesLocal) + " " + Sh.q(dir + "/values.tsv") + "\n"
-                + Scripts.snapshot(dir, current, keys)
-                + "echo SNAP_OK\n";
-        Sh.Result r = Runner.root(c, "snapshot.sh", script, 25000);
-        if (r.ok() && r.out.contains("SNAP_OK")) {
-            Op o = new Op(); o.ok = true; o.message = dir; o.count = keys.size();
-            return o;
-        }
-        return Op.fail("快照失败：" + r.text().trim());
-    }
-
     // ------------------------------------------------------------ 持久化模块
 
     public static Op installModule(Context c, Target t, int level) {
@@ -666,7 +622,7 @@ public final class Engine {
                 + "echo MOD_OK\n";
         Sh.Result r = Runner.root(c, "install-module.sh", script, 30000);
         if (r.ok() && r.out.contains("MOD_OK")) {
-            return Op.done("持久化模块已安装，重启后仍会生效（" + Props.LEVEL_NAME[level] + "档）", 0, r.out);
+            return Op.done("持久化模块已安装，重启后仍会生效（" + Props.LEVEL_NAME[Props.normalizedLevel(level)] + "档）", 0, r.out);
         }
         return Op.fail("安装模块失败：" + r.text().trim());
     }
