@@ -1,0 +1,16 @@
+# 构建产物与本地工具链（不入库）
+build/
+out/
+*.apk
+*.idsig
+*.so
+app/tools/android.jar
+app/tools/*.jar
+*.jks
+*.keystore
+__pycache__/
+*.pyc
+# 编辑器/系统杂物
+.DS_Store
+.idea/
+*.swp

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.xuzhang.devicetoolbox"
+    android:versionCode="1"
+    android:versionName="1.0">
+
+    <uses-sdk android:minSdkVersion="21" android:targetSdkVersion="34" />
+
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
+
+    <application
+        android:allowBackup="false"
+        android:extractNativeLibs="true"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/AppTheme">
+
+        <!-- 2026-10-06：Xposed 那条路正式退役，这里原本有四条 xposedmodule /
+             xposeddescription / xposedminversion / xposedscope 的 <meta-data>。
+             退役原因：它只在目标进程里改 Java 层，native 用 __system_property_find
+             直接读内存，绕过不了；而且在 LSPosed 里挂着时还会因为缺方法抛
+             AbstractMethodError（真机实测）。逐应用伪装现在只有 Zygisk 一条路
+             （见 core/Zygisk.java），靠 <meta-data> 认领模块的注册已经不存在，
+             所以 LSPosed 的模块列表里不会再有本应用。 -->
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:configChanges="orientation|screenSize|keyboardHidden|uiMode"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

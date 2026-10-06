@@ -1,0 +1,6 @@
+id=devicetoolbox_zygisk
+name=System Props Helper
+version=1.0
+versionCode=1
+author=xuzhang
+description=Per-process system property normalization
