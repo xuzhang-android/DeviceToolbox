@@ -32,9 +32,21 @@ CXX_LIBDIR="${CXX_LIBDIR:-}"
 PYTHON="${PYTHON:-python3}"
 READELF="${READELF:-readelf}"
 
+# ── 可选：从 ANDROID_NDK_HOME / ANDROID_NDK_ROOT 找 NDK 的 clang++ ──
+# 只在默认的 clang++ 找不到时才动手，找不到就保持原样、按原来的方式报错。
+NDK_ROOT="${ANDROID_NDK_HOME:-${ANDROID_NDK_ROOT:-}}"
+if ! command -v "$CXX" >/dev/null 2>&1 && [ -n "$NDK_ROOT" ] && [ -d "$NDK_ROOT" ]; then
+    _ndk_cxx="$(ls "$NDK_ROOT"/toolchains/llvm/prebuilt/*/bin/clang++ 2>/dev/null | head -n1 || true)"
+    if [ -n "$_ndk_cxx" ]; then
+        CXX="$_ndk_cxx"
+        echo "· 用 NDK 的 clang++：$CXX"
+    fi
+fi
+
 if ! command -v "$CXX" >/dev/null 2>&1; then
     echo "✗ 找不到 C++ 编译器：$CXX" >&2
-    echo "  请把工具链加进 PATH，或用 CXX=/path/to/clang++ 指定。" >&2
+    echo "  请把工具链加进 PATH，或用 CXX=/path/to/clang++ 指定；" >&2
+    echo "  也可以用 ANDROID_NDK_HOME=/path/to/ndk 让它自动找 NDK 里的 clang++。" >&2
     exit 1
 fi
 if ! command -v "$PYTHON" >/dev/null 2>&1; then
