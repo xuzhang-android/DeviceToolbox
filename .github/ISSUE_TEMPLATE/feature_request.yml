@@ -1,0 +1,53 @@
+name: 功能请求 / 机型补数据
+description: 新功能、新属性键、机型库里缺的机型、指纹不对
+title: "[feat] "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        补机型数据的话，请尽量给出**可验证的来源**（公开的 `build.prop` 归档、厂商固件、
+        自己设备上的 `getprop` 全量输出）。我们宁可少写一条，也不编一个值进去。
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: 涉及范围
+      options:
+        - 界面 / 交互
+        - 属性改写引擎
+        - App 级伪装（Zygisk）
+        - 机型库 / 指纹数据
+        - 构建与工具链
+        - 文档
+    validations:
+      required: true
+
+  - type: textarea
+    id: need
+    attributes:
+      label: 想要什么
+      description: 一句话说清目标，再补细节
+    validations:
+      required: true
+
+  - type: textarea
+    id: why
+    attributes:
+      label: 使用场景
+      description: 为什么现有功能解决不了（哪个 App、哪个检测点、哪一步卡住）
+    validations:
+      required: true
+
+  - type: textarea
+    id: source
+    attributes:
+      label: 数据来源（补机型时必填）
+      description: 链接、固件版本、`getprop` 片段都可以；脱敏后再贴
+      render: text
+
+  - type: textarea
+    id: alt
+    attributes:
+      label: 你考虑过的其它做法
+      description: 可选。写清楚能避免绕远路

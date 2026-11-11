@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 安全漏洞 / 提权路径
+    url: https://github.com/xuzhang-android/DeviceToolbox/security/advisories/new
+    about: 这个工具跑在 root 下。能导致属性注入、路径穿越、命令注入的问题请走私密通道，不要开公开 issue。
+  - name: 先读 README
+    url: https://github.com/xuzhang-android/DeviceToolbox#readme
+    about: 构建步骤、安全护栏、只支持 arm64 这些前提都在里面，先看一眼能省一轮来回。
