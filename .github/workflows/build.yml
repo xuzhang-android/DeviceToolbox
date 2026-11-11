@@ -1,0 +1,111 @@
+name: Build
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 版本号（写进产物文件名，例如 1.0.1）
+        required: false
+        default: dev
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NDK_VERSION: "27.0.12077973"
+  BUILD_TOOLS: "34.0.0"
+  PLATFORM: "android-34"
+
+jobs:
+  apk:
+    name: 构建 APK 与 Zygisk 模块
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 机型库校验（不合格就不打包）
+        run: python3 app/tools-src/check-fingerprints.py
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: android-actions/setup-android@v3
+
+      - name: 安装 SDK / NDK
+        run: |
+          yes | sdkmanager --licenses >/dev/null 2>&1 || true
+          sdkmanager --install "platforms;${PLATFORM}" "build-tools;${BUILD_TOOLS}" "ndk;${NDK_VERSION}" >/dev/null
+
+      - name: 解析版本号
+        id: ver
+        run: |
+          MANIFEST_VER=$(grep -oP 'android:versionName="\K[^"]+' app/AndroidManifest.xml)
+          VER="${{ github.event.inputs.version }}"
+          if [ -z "$VER" ] || [ "$VER" = "dev" ]; then
+            VER="${MANIFEST_VER}"
+          fi
+          echo "version=$VER" >> "$GITHUB_OUTPUT"
+          echo "manifest=$MANIFEST_VER" >> "$GITHUB_OUTPUT"
+          echo "本次产物版本：$VER（AndroidManifest：$MANIFEST_VER）"
+
+      - name: 构建 Zygisk 原生模块
+        run: |
+          NDK="${ANDROID_SDK_ROOT}/ndk/${NDK_VERSION}"
+          CXX="${NDK}/toolchains/llvm/prebuilt/linux-x86_64/bin/clang++" \
+            bash module/build.sh
+
+      - name: 打包 Zygisk 模块（Magisk / KernelSU / APatch 可刷入）
+        run: |
+          mkdir -p dist
+          cd module/pkg
+          zip -qr "../../dist/DeviceToolbox-zygisk-${{ steps.ver.outputs.version }}.zip" . -x '.*'
+          cd ../..
+          unzip -l "dist/DeviceToolbox-zygisk-${{ steps.ver.outputs.version }}.zip"
+
+      - name: 生成 CI 签名密钥
+        run: |
+          keytool -genkeypair -noprompt \
+            -keystore ci.jks -storepass android -keypass android \
+            -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 \
+            -dname "CN=CI, O=DeviceToolbox, C=CN"
+
+      - name: 构建 APK
+        run: |
+          SDK="${ANDROID_SDK_ROOT}"
+          mkdir -p dist
+          ANDROID_JAR="${SDK}/platforms/${PLATFORM}/android.jar" \
+          AAPT2="${SDK}/build-tools/${BUILD_TOOLS}/aapt2" \
+          D8="${SDK}/build-tools/${BUILD_TOOLS}/lib/d8.jar" \
+          APKSIGNER="${SDK}/build-tools/${BUILD_TOOLS}/lib/apksigner.jar" \
+          KEYSTORE="$PWD/ci.jks" KS_PASS=android KS_ALIAS=androiddebugkey \
+          OUT_APK="$PWD/dist/DeviceToolbox-${{ steps.ver.outputs.version }}.apk" \
+            bash app/build.sh
+
+      - name: 产物自检
+        run: |
+          APK="dist/DeviceToolbox-${{ steps.ver.outputs.version }}.apk"
+          "${ANDROID_SDK_ROOT}/build-tools/${BUILD_TOOLS}/apksigner" verify --print-certs "$APK"
+          unzip -l "$APK" | grep -E "classes\.dex|lib/arm64-v8a/libdtbprobe\.so|assets/devices\.tsv|fonts/"
+          test "$(unzip -l "$APK" | grep -c 'assets/devices.tsv')" -ge 1
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DeviceToolbox-${{ steps.ver.outputs.version }}
+          path: dist/*
+          if-no-files-found: error
+
+      - name: 发布 Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true
+          fail_on_unmatched_files: true
