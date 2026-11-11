@@ -1,5 +1,13 @@
 # 改机型工具箱
 
+**中文** · [English](README_EN.md)
+
+![CI](https://github.com/xuzhang-android/DeviceToolbox/actions/workflows/ci.yml/badge.svg)
+![Build](https://github.com/xuzhang-android/DeviceToolbox/actions/workflows/build.yml/badge.svg)
+![License](https://img.shields.io/badge/license-GPL--3.0-blue)
+![API](https://img.shields.io/badge/API-21%20~%2034-3ddc84)
+![size](https://img.shields.io/badge/%E6%9C%BA%E5%9E%8B%E5%BA%93-3%2C539%20%E6%9D%A1-4c8dff)
+
 一个跑在 Android 上的机型伪装工具：改掉系统里跟「这台手机是什么」有关的属性，
 并支持开机持久化、快照回滚与 App 级伪装。
 
@@ -207,8 +215,28 @@ apksigner sign --ks <你的密钥> ...        # 签名
 
 工具链：`aapt2` / `javac` / `java` / `jar`（另外 `PYTHON` 用于把 `classes.dex` 与
 `lib/arm64-v8a/libdtbprobe.so` 追加进 APK，可用 `PYTHON` 指定解释器）。
+**不想一个个写环境变量的话**：只要环境里有 `ANDROID_SDK_ROOT`（或 `ANDROID_HOME`），
+`app/build.sh` 会自动从 `platforms/` 与 `build-tools/` 里挑版本最高的那一份，补齐
+`android.jar`、`d8.jar`、`apksigner.jar` 与 `aapt2`；同一思路下 `module/build.sh` 支持
+`ANDROID_NDK_HOME`（或 `ANDROID_NDK_ROOT`）自动找 NDK 里的 `clang++`。自动探测只在对应变量
+没给、默认路径也找不到时才生效，找不到照旧按原来的方式报错，不猜版本、不下载任何东西。
+
 两个构建脚本都用 `cd "$(dirname "$0")"` 定位自身目录，不写死任何绝对路径，
 可以在任意工作目录下调用；脚本开头注释里列出了全部可覆盖的环境变量及其默认值。
+
+### 3. 或者交给 CI
+
+`.github/workflows/build.yml` 在 Ubuntu 上复刻了同一条链路：`sdkmanager` 装 SDK 与 NDK、
+用 NDK 的 clang 编译模块、用 build-tools 构建并签名 APK，然后 `apksigner verify` 并断言 APK
+里确实有 `classes.dex`、`lib/arm64-v8a/libdtbprobe.so` 与 `assets/devices.tsv`。
+
+- 手动跑：Actions 页面点 **Run workflow**，产物在 Artifacts 里
+- 打一个 `v*` tag：自动发 Release，附 `DeviceToolbox-<版本>.apk` 与可刷入的
+  `DeviceToolbox-zygisk-<版本>.zip`
+
+CI 用的是**一次性调试密钥**，只用于验证构建能过；正式分发请用你自己的 keystore 重新签名。
+另外 `.github/workflows/ci.yml` 会在每次 push / PR 时跑机型库四项硬检查
+（`app/tools-src/check-fingerprints.py`）与构建脚本语法检查 —— 数据不合格就不打包。
 
 ---
 
@@ -300,6 +328,24 @@ Momo 这类检测应用会同时打印 `Build.FINGERPRINT` 和 `ro.build.fingerp
 3. **改属性有风险**。个别应用依赖机型信息做校验，改完可能行为异常。用「还原原始」可回退。
 4. 还原用的是**快照**。从没成功存过快照时，「还原原始」会明确告诉你没有可用快照，而不是瞎写一气。
 5. 卸载持久化模块后，**重启**才会失效（当前已生效的属性不会立刻变回去）。
+
+---
+
+## 反馈与贡献
+
+| 你想做的事 | 去哪儿 |
+|---|---|
+| 报告 bug（属性没写对、伪装被识破、构建失败） | [新建 issue](https://github.com/xuzhang-android/DeviceToolbox/issues/new/choose)（结构化表单，会要求填设备、root 方案、Zygisk 实现与复现步骤） |
+| 机型库里缺机型 / 指纹不对 | 同上，选「功能请求 / 机型补数据」，附可验证的来源 |
+| 提 PR | 先看 [CONTRIBUTING.md](CONTRIBUTING.md)：机型库的 13 列硬规则、代码约束、提交信息格式 |
+| 安全漏洞（属性注入、路径穿越、命令注入） | **不要开公开 issue**，走 [SECURITY.md](SECURITY.md) 里的私密通道 |
+| 看改了什么 | [CHANGELOG.md](CHANGELOG.md) |
+
+提 bug 前先跑一次机型库校验，能挡掉一半「其实是数据不对」的问题：
+
+```bash
+python3 app/tools-src/check-fingerprints.py --cover
+```
 
 ---
 

@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  dataset:
+    name: 机型库自洽校验
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 指纹与行内自洽（A/B/C/D 四项硬检查）
+        run: python3 app/tools-src/check-fingerprints.py --cover
+
+      - name: 机型库规模与字段数
+        run: |
+          python3 - <<'PY'
+          import sys, collections
+          rows = [l.rstrip("\n").split("\t") for l in open("app/assets/devices.tsv", encoding="utf-8") if l.strip()]
+          bad = [i + 1 for i, r in enumerate(rows) if len(r) != 13]
+          brands = len({r[0] for r in rows})
+          fp = sum(1 for r in rows if len(r) > 9 and r[9].strip())
+          print(f"行数 {len(rows)}｜品牌 {brands}｜带指纹 {fp}（{fp/len(rows):.1%}）")
+          if bad:
+              print(f"列数不是 13 的行：{bad[:20]}", file=sys.stderr)
+              sys.exit(1)
+          PY
+
+  scripts:
+    name: 构建脚本语法
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: bash -n
+        run: |
+          bash -n app/build.sh
+          bash -n module/build.sh
+
+      - name: python 语法
+        run: |
+          python3 -m py_compile app/tools-src/check-fingerprints.py \
+                               app/tools-src/check_config.py \
+                               module/sanitize_so.py

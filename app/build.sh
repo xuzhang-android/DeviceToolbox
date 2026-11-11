@@ -48,6 +48,39 @@ OUT_APK="${OUT_APK:-$SELF/改机型工具箱.apk}"
 
 die() { echo "✗ $1" >&2; shift; for l in "$@"; do echo "  $l" >&2; done; exit 1; }
 
+# ── 可选：从 ANDROID_SDK_ROOT / ANDROID_HOME 自动补齐工具链 ──
+# 只在对应环境变量没给、且默认路径下确实找不到时才动手；找不到就保持原样，
+# 后面那段前置检查会照常报错。不猜版本、不下载任何东西。
+SDK_ROOT="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-}}"
+SRC_NOTE=""
+if [ -n "$SDK_ROOT" ] && [ -d "$SDK_ROOT" ]; then
+    if [ ! -f "$ANDROID_JAR" ]; then
+        # 取版本号最大的那个 platform（sort -V：android-9 < android-34）
+        _p="$(ls -d "$SDK_ROOT"/platforms/android-* 2>/dev/null | sort -V | tail -n1 || true)"
+        if [ -n "$_p" ] && [ -f "$_p/android.jar" ]; then
+            ANDROID_JAR="$_p/android.jar"
+            SRC_NOTE="$SRC_NOTE android.jar"
+        fi
+    fi
+    if [ -z "$D8" ] || [ -z "$APKSIGNER" ] || ! command -v "$AAPT2" >/dev/null 2>&1; then
+        _bt="$(ls -d "$SDK_ROOT"/build-tools/* 2>/dev/null | sort -V | tail -n1 || true)"
+        if [ -n "$_bt" ]; then
+            if [ -z "$D8" ] && [ -f "$_bt/lib/d8.jar" ]; then
+                D8="$_bt/lib/d8.jar"; SRC_NOTE="$SRC_NOTE d8.jar"
+            fi
+            if [ -z "$APKSIGNER" ] && [ -f "$_bt/lib/apksigner.jar" ]; then
+                APKSIGNER="$_bt/lib/apksigner.jar"; SRC_NOTE="$SRC_NOTE apksigner.jar"
+            fi
+            if ! command -v "$AAPT2" >/dev/null 2>&1 && [ -x "$_bt/aapt2" ]; then
+                AAPT2="$_bt/aapt2"; SRC_NOTE="$SRC_NOTE aapt2"
+            fi
+        fi
+    fi
+    if [ -n "$SRC_NOTE" ]; then
+        echo "· 从 \$SDK_ROOT 自动补齐：${SRC_NOTE# }（$SDK_ROOT）"
+    fi
+fi
+
 # ── 前置检查：缺什么就说清楚去哪儿补，不猜、不静默 ──
 [ -f "$ANDROID_JAR" ] || die "找不到 android.jar：$ANDROID_JAR" \
     "仓库不附带 android.jar（约 26 MB）。" \
